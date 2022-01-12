@@ -6,6 +6,9 @@ class DarkTheme:
     background_image_path = 'images/Dark.png'
     single_button_path = 'images/Single Player Dark Button.png'
     two_button_path = 'images/Two Players Dark Button.png'
+    easy_button_path = 'images/Easy Button.png'
+    medium_button_path = 'images/Medium Button.png'
+    hard_button_path = 'images/Hard Button.png'
 
 
 class LightTheme:
@@ -13,6 +16,9 @@ class LightTheme:
     background_image_path = 'images/Light.png'
     single_button_path = 'images/Single Player Light Button.png'
     two_button_path = 'images/Two Players Light Button.png'
+    easy_button_path = 'images/Easy Button.png'
+    medium_button_path = 'images/Medium Button.png'
+    hard_button_path = 'images/Hard Button.png'
 
 
 def dark_theme_selected():

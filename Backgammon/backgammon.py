@@ -1,5 +1,8 @@
+import tkinter as tk
+
 from themes import *
-from main_menu import *
+from gui import GUI
+from PIL import Image, ImageTk
 
 
 def create_root():
@@ -19,5 +22,5 @@ if __name__ == '__main__':
     theme = DarkTheme if dark_theme_selected() else LightTheme
 
     create_root()
-    MainMenu(root, theme)
+    GUI(root, theme)
     root.mainloop()
