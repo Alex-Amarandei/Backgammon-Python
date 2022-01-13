@@ -6,6 +6,9 @@ from PIL import Image, ImageTk
 
 
 def create_root():
+    """
+    This function creates the root of our tkinter scene along with setting a provided image as the app icon.
+    """
     global root
     global theme
 
