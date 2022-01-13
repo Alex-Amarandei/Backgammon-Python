@@ -39,6 +39,8 @@ class Game:
         self.player_2 = []
 
         self.moves = []
+        self.white_jail = []
+        self.black_jail = []
 
     def update_game(self, event):
         self.diameter = 0.81 * self.gui.size / 12
@@ -49,8 +51,6 @@ class Game:
         if self.turn == 'none_1':
             self.new_game()
             self.gui.root.resizable(False, False)
-        else:
-            self.take_turn()
 
     def new_game(self):
         self.status = Status.ROLL
@@ -279,9 +279,6 @@ class Game:
             return True
         return False
 
-    def take_turn(self):
-        pass
-
     def roll(self, event):
         if self.turn == 'none_1':
             self.choice_roll(1)
@@ -289,13 +286,16 @@ class Game:
             self.choice_roll(2)
         else:
             if self.status == Status.ROLL:
-                first = secrets.randbelow(7)
-                second = secrets.randbelow(7)
+                first = secrets.choice(range(1, 7))
+                second = secrets.choice(range(1, 7))
+                print(first, second)
 
                 if first == second:
                     self.moves = 4 * [first]
                 else:
                     self.moves = [first, second]
+
+                print(self.moves)
 
                 self.status = Status.MOVE
                 self.update_status()
@@ -303,12 +303,16 @@ class Game:
 
     def choice_roll(self, player):
         if player == 1:
-            self.player_1 = [secrets.randbelow(7), secrets.randbelow(7)]
+            self.player_1 = [secrets.choice(range(1, 7)), secrets.choice(range(1, 7))]
+            print(self.player_1[0], self.player_1[1])
             self.turn = 'none_2'
             self.update_player()
             self.update_dice(self.player_1[0], self.player_1[1])
         else:
-            self.player_2 = [secrets.randbelow(7), secrets.randbelow(7)]
+            self.player_2 = [secrets.choice(range(1, 7)), secrets.choice(range(1, 7))]
+            print('before')
+            print(self.player_1[0], self.player_1[1])
+            print(self.player_2[0], self.player_2[1])
             self.update_dice(self.player_2[0], self.player_2[1])
 
             if self.player_1[0] == self.player_1[1]:
@@ -327,12 +331,14 @@ class Game:
                 else:
                     self.turn = 'Black'
 
+            print(self.player_1[0], self.player_1[1])
+            print(self.player_2[0], self.player_2[1])
             self.update_player()
 
     def move_is_valid(self, to_slot):
-        difference = to_slot.position - self.slots[self.drag_data.from_slot].position
+        difference = to_slot.position - self.drag_data.from_slot
 
-        q_from = get_quadrant(self.slots[self.drag_data.from_slot].position)
+        q_from = get_quadrant(self.drag_data.from_slot)
         q_to = get_quadrant(to_slot.position)
 
         if self.turn == 'White':
@@ -357,7 +363,7 @@ class Game:
                         return self.stack_is_valid(to_slot, difference)
                     return False
                 elif q_to == 1:
-                    difference = to_slot.position + 24 - self.slots[self.drag_data.from_slot].position
+                    difference = to_slot.position + 24 - self.drag_data.from_slot
                     if difference > 0 and difference in self.moves:
                         return self.stack_is_valid(to_slot, difference)
                     return False
@@ -369,7 +375,7 @@ class Game:
                         return self.stack_is_valid(to_slot, abs(difference))
                     return False
                 elif q_to == 4:
-                    difference = self.slots[self.drag_data.from_slot].position + 24 - to_slot.position
+                    difference = self.drag_data.from_slot + 24 - to_slot.position
                     if difference > 0 and difference in self.moves:
                         return self.stack_is_valid(to_slot, difference)
                 return False
@@ -407,8 +413,49 @@ class Game:
             return True
         elif len(to_slot.pieces) == 1:
             self.moves.remove(difference)
+            self.capture(to_slot)
             return True
         return False
+
+    def capture(self, to_slot):
+        piece_position = to_slot.pieces[-1].position
+
+        if self.turn == 'White':
+            self.gui.main_canvas.delete(self.black_pieces[piece_position].index)
+
+            self.black_pieces[piece_position] = Piece(
+                    index=self.gui.main_canvas.create_oval(
+                        self.width / 2 - 0.025 * self.gui.size - 2 * self.margin,
+                        self.y_up + len(self.black_jail) * self.diameter,
+                        self.width / 2 - 0.025 * self.gui.size + self.diameter - 2 * self.margin,
+                        self.y_up + (len(self.black_jail) + 1) * self.diameter,
+                        fill=self.gui.theme.black_fill),
+                    position=piece_position, slot=-1, color='Black')
+
+            self.gui.main_canvas.tag_bind(self.black_pieces[piece_position].index, '<ButtonPress-1>',
+                                          lambda event, item=self.black_pieces[piece_position]: self.drag_start(event, item))
+            self.gui.main_canvas.tag_bind(self.black_pieces[piece_position].index, '<ButtonRelease-1>', self.drag_stop)
+            self.gui.main_canvas.tag_bind(self.black_pieces[piece_position].index, '<B1-Motion>', self.drag)
+            self.black_jail.append(self.black_pieces[piece_position])
+        else:
+            self.gui.main_canvas.delete(self.white_pieces[piece_position].index)
+
+            self.white_pieces[piece_position] = Piece(
+                    index=self.gui.main_canvas.create_oval(
+                        self.width / 2 - 0.025 * self.gui.size - 2 * self.margin,
+                        self.y_down - (len(self.black_jail) + 1) * self.diameter,
+                        self.width / 2 - 0.025 * self.gui.size + self.diameter - 2 * self.margin,
+                        self.y_down - len(self.black_jail) * self.diameter,
+                        fill=self.gui.theme.white_fill),
+                    position=piece_position, slot=-1, color='White')
+
+            self.gui.main_canvas.tag_bind(self.white_pieces[piece_position].index, '<ButtonPress-1>',
+                                          lambda event, item=self.black_pieces[piece_position]: self.drag_start(event, item))
+            self.gui.main_canvas.tag_bind(self.white_pieces[piece_position].index, '<ButtonRelease-1>', self.drag_stop)
+            self.gui.main_canvas.tag_bind(self.white_pieces[piece_position].index, '<B1-Motion>', self.drag)
+            self.black_jail.append(self.white_pieces[piece_position])
+
+        to_slot.pieces.pop(-1)
 
 
 def get_quadrant(number):
