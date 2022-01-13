@@ -10,6 +10,11 @@ from game_modes import GameMode
 
 class GUI:
     def __init__(self, root, theme):
+        """
+        Initialises the main object holding all the information regarding the GUI and UI/UX up until the Game menu, which is separate.
+        :param root: the root of tkinter
+        :param theme: the theme of the user's OS
+        """
         self.root = root
         self.theme = theme
         self.scale = 0.8
@@ -38,6 +43,10 @@ class GUI:
         self.main_canvas.bind('<Configure>', self.update)
 
     def update(self, event):
+        """
+        A centralised function for updating the UI depending on the actions occurring on the screen.
+        :param event: the event triggering the update, used for getting the x and y coordinates
+        """
         self.clean()
 
         if self.current_menu == Menu.MAIN_MENU:
@@ -48,22 +57,42 @@ class GUI:
             self.update_game_menu(event)
 
     def clean(self):
+        """
+        Cleans the entire UI, but redraws the background gradient..
+        """
         self.main_canvas.delete('all')
         self.main_canvas.create_image(0, 0, image=self.background_image, anchor='nw')
 
     def update_main_menu(self, event):
+        """
+        Updates the Title and Player buttons to be resized according to the window.
+        :param event: widget used for getting the current width and height of the screen
+        """
         self.update_title(event.widget.winfo_width(), event.widget.winfo_height())
         self.update_player_buttons(event.widget.winfo_width(), event.widget.winfo_height())
 
     def update_difficulty_menu(self, event):
+        """
+        Updates the difficulty menu with its corresponding title and buttons in order to fit the new sizes.
+        :param event: widget used for getting the current width and height of the screen
+        """
         self.update_title(event.widget.winfo_width(), event.widget.winfo_height())
         self.update_difficulty_buttons(event.widget.winfo_width(), event.widget.winfo_height())
 
     def update_game_menu(self, event):
+        """
+        Creates the board and calls the corresponding function in the Game menu.
+        :param event: widget used for getting the current width and height of the screen
+        """
         self.update_board(event.widget.winfo_width(), event.widget.winfo_height())
         self.game.update_game(event)
 
     def update_title(self, width, height):
+        """
+        Updates the title to fit the new sizes.
+        :param width: the width of the window
+        :param height: the height of the window
+        """
         font = 'Century ' + str(int(min(width / 16, height / 6))) + ' bold'
         self.game_title = self.main_canvas.create_text(width / 2,
                                                        height / 6,
@@ -72,6 +101,11 @@ class GUI:
                                                        text='Backgammon')
 
     def update_player_buttons(self, width, height):
+        """
+        Resizes the player buttons to fit the window size.
+        :param width: the width of the window
+        :param height: the height of the window
+        """
         self.player_buttons[0].image = ImageTk.PhotoImage(
             Image.open(self.theme.single_button_path).resize((int(width / 2), int(height / 7)), Image.ANTIALIAS))
         self.player_buttons[1].image = ImageTk.PhotoImage(
@@ -88,6 +122,11 @@ class GUI:
         self.main_canvas.tag_bind(self.player_buttons[1].index, '<Button-1>', self.play_two)
 
     def update_difficulty_buttons(self, width, height):
+        """
+        Resizes the difficulty buttons to fit the window size.
+        :param width: the width of the window
+        :param height: the height of the window
+        """
         self.difficulty_buttons[0].image = ImageTk.PhotoImage(
             Image.open(self.theme.easy_button_path).resize((int(width / 6), int(2 * height / 7)), Image.ANTIALIAS))
         self.difficulty_buttons[1].image = ImageTk.PhotoImage(
@@ -110,6 +149,11 @@ class GUI:
         self.main_canvas.tag_bind(self.difficulty_buttons[2].index, '<Button-1>', self.hard)
 
     def update_board(self, width, height):
+        """
+        Resizes the board to fit the window size.
+        :param width: the width of the window
+        :param height: the height of the window
+        """
         self.size = self.scale * min(width, height)
         self.game.x_left = (width - self.size) / 2 + 0.025 * self.size
         self.game.y_up = (height - self.size) / 2 + 0.025 * self.size
@@ -138,6 +182,11 @@ class GUI:
         self.update_triangles(width, height)
 
     def update_triangles(self, width, height):
+        """
+        Resizes the slots (triangles) to fit the window size.
+        :param width: the width of the window
+        :param height: the height of the window
+        """
         backup = deepcopy(self.game.slots)
 
         self.size = self.scale * min(width, height)
@@ -161,25 +210,45 @@ class GUI:
             self.game.slots[i].pieces = deepcopy(backup[i].pieces)
 
     def play_single(self, event):
+        """
+        For choosing to play with the computer.
+        :param event: widget used for getting the current width and height of the screen
+        """
         self.current_menu = Menu.DIFFICULTY_MENU
         self.update(event)
 
     def play_two(self, event):
+        """
+        For choosing to play with another player locally.
+        :param event: widget used for getting the current width and height of the screen
+        """
         self.current_menu = Menu.GAME_MENU
         self.game_mode = GameMode.VS
         self.update(event)
 
     def easy(self, event):
+        """
+        For choosing to play with the computer on an easy difficulty.
+        :param event: widget used for getting the current width and height of the screen
+        """
         self.current_menu = Menu.GAME_MENU
         self.game_mode = GameMode.EASY
         self.update(event)
 
     def medium(self, event):
+        """
+        For choosing to play with the computer on a medium difficulty.
+        :param event: widget used for getting the current width and height of the screen
+        """
         self.current_menu = Menu.GAME_MENU
         self.game_mode = GameMode.MEDIUM
         self.update(event)
 
     def hard(self, event):
+        """
+        For choosing to play with the computer on a hard difficulty.
+        :param event: widget used for getting the current width and height of the screen
+        """
         self.current_menu = Menu.GAME_MENU
         self.game_mode = GameMode.HARD
         self.update(event)

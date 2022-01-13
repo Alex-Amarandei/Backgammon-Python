@@ -11,6 +11,10 @@ from game_modes import GameMode
 
 class Game:
     def __init__(self, gui):
+        """
+        Is meant to hold all necessary information for game and UI logic and is also used for fetching different data and values from other files that it is linked to.
+        :param gui: a reference to the GUI instance containing the root and main canvas of tkinter
+        """
         self.gui = gui
         self.turn = 'none_1'
         self.status = None
@@ -43,6 +47,10 @@ class Game:
         self.jail = {'White': [], 'Black': []}
 
     def update_game(self, event):
+        """
+        Initialises the game with its default values.
+        :param event: widget representing the event which triggered this function's call (mainly used for getting the window's size)
+        """
         self.diameter = 0.81 * self.gui.size / 12
         self.margin = 0.09 * self.gui.size / 24
         self.width = event.widget.winfo_width()
@@ -53,6 +61,9 @@ class Game:
             self.gui.root.resizable(False, False)
 
     def new_game(self):
+        """
+        Initialises the game data with their respective default values.
+        """
         self.status = Status.ROLL
         self.update_player()
         self.update_status()
@@ -62,6 +73,9 @@ class Game:
         self.set_new_slots()
 
     def update_player(self):
+        """
+        Updates the player text on the right of the screen according to which of the two's turn it is.
+        """
         if self.turn == 'none_1':
             turn = 'White'
         elif self.turn == 'none_2':
@@ -78,6 +92,9 @@ class Game:
                                                            text=turn)
 
     def update_status(self):
+        """
+        Updates the status below the player with values such as Move and Roll in order to suggest to the human player what kind of action he is required to take now.
+        """
         self.gui.main_canvas.delete(self.status_index)
         font = 'Century ' + str(int(min(self.width / 32, self.height / 12))) + ' bold'
         self.status_index = self.gui.main_canvas.create_text(self.width - (self.width - self.gui.size) / 4,
@@ -87,6 +104,9 @@ class Game:
                                                              text=self.status.value)
 
     def draw_roll_button(self):
+        """
+        This function is only called once and its role is to display the Roll button underneath the dices on the left of the screen.
+        """
         self.roll_button.image = ImageTk.PhotoImage(
             Image.open(self.gui.theme.roll_path).resize(
                 (int((self.width - self.gui.size) / 4), int(self.height * 0.15)), Image.ANTIALIAS))
@@ -97,6 +117,11 @@ class Game:
         self.gui.main_canvas.tag_bind(self.roll_button.index, '<Button-1>', lambda event: self.roll())
 
     def update_dice(self, first, second):
+        """
+        Updates the images representing the dices according to the values which where randomly picked during the rolling phase.
+        :param first: integer representing the value of the first die
+        :param second: integer representing the value of the second die
+        """
         self.dice_1.image = ImageTk.PhotoImage(
             Image.open(self.choose_dice_image(first)).resize((int(self.height * 0.12), int(self.height * 0.12)),
                                                              Image.ANTIALIAS))
@@ -116,6 +141,11 @@ class Game:
             self.computer_move()
 
     def choose_dice_image(self, number):
+        """
+        A utility function which helps pick the right path to the image corresponding to each of the values on the die.
+        :param number: integer representing the value on the die
+        :return: string representing the path to the image requested
+        """
         if number == 1:
             return self.gui.theme.dice_1_path
         elif number == 2:
@@ -129,6 +159,9 @@ class Game:
         return self.gui.theme.dice_6_path
 
     def set_new_slots(self):
+        """
+        Sets the initial layout of the board, with the slots (triangles) and pieces.
+        """
         for i in range(2, 7):
             self.black_pieces[i].position = i
             self.place(self.black_pieces[i], self.slots[0])
@@ -161,12 +194,12 @@ class Game:
             self.white_pieces[i].position = i
             self.place(self.white_pieces[i], self.slots[23])
 
-    # def update_pieces(self):
-    #     for slot in self.slots:
-    #         for piece in slot.pieces:
-    #             self.place(piece, slot)
-
     def drag_start(self, event, item):
+        """
+        A function called at the start of the dragging action of a piece.
+        :param event: event which triggered the function, used for getting the x and y coordinates of the cursor
+        :param item: the piece to be dragged around
+        """
         if self.slots[item.slot].pieces[-1].position == item.position \
                 and self.status == Status.MOVE \
                 and self.turn == item.color:
@@ -176,9 +209,12 @@ class Game:
                 self.slots[item.slot].pieces.remove(item)
 
     def drag_stop(self, event):
+        """
+        A function called at the end of the dragging action of a piece which validates if the current position is suitable or the action will be reverted.
+        :param event: event which triggered the function, used for getting the x and y coordinates of the cursor
+        """
         if self.drag_data.from_position is not None:
             to_slot = self.position_is_valid(event)
-            # self.gui.main_canvas.delete(self.drag_data.index)
 
             if self.drag_data.color == 'White':
                 if to_slot == -1:
@@ -201,6 +237,10 @@ class Game:
         self.drag_data = DragData()
 
     def drag(self, event):
+        """
+        A function called during the dragging action of a piece which moves it around according to the data in the DragData object.
+        :param event: the event of dragging, necessary for getting the x and y coordinates of the cursor
+        """
         if self.drag_data.index is not None:
             delta_x = event.x - self.drag_data.x
             delta_y = event.y - self.drag_data.y
@@ -209,6 +249,12 @@ class Game:
             self.drag_data.y = event.y
 
     def is_inside(self, slot, event):
+        """
+        Utility function to check if a piece is inside the domain or territory of a certain slot so that it can be snapped-in-place.
+        :param slot: slot to be checked for the aforementioned reasons
+        :param event: widget necessary for getting the x and y coordinates of the cursor
+        :return: True is the piece has its center in the boundaries of the slot and False, otherwise
+        """
         if slot.position < 12:
             y_down = self.y_down
             y_up = y_down - (self.y_down - self.y_up) / 2
@@ -233,6 +279,10 @@ class Game:
         return False
 
     def choice_roll(self, player):
+        """
+        The first roll of the game for deciding which player moves first.
+        :param player: integer representing the player which is at turn
+        """
         if player == 1:
             self.player_1 = [secrets.choice(range(1, 7)), secrets.choice(range(1, 7))]
             self.turn = 'none_2'
@@ -261,6 +311,9 @@ class Game:
             self.update_player()
 
     def roll(self):
+        """
+        Function used by all players to access the dice-rolling logic.
+        """
         if self.turn == 'none_1':
             self.choice_roll(1)
         elif self.turn == 'none_2':
@@ -274,13 +327,18 @@ class Game:
                     self.moves = 4 * [first]
                 else:
                     self.moves = [first, second]
-                self.eliminate_impossible_moves()
+                # self.eliminate_impossible_moves()
 
                 self.status = Status.MOVE
                 self.update_status()
                 self.update_dice(first, second)
 
     def position_is_valid(self, event):
+        """
+        utility function to check if the position in which a piece was left is legal.
+        :param event: widget used for getting the x and y coordinates of the cursor
+        :return: the slot's position on the board if the position is valid and -1 otherwise
+        """
         if self.turn == 'White' and len(self.jail['White']) > 0:
             for i in range(12, 18):
                 if self.is_inside(self.slots[i], event):
@@ -306,6 +364,11 @@ class Game:
         return -1
 
     def move_is_valid(self, to_slot):
+        """
+        Utility function used to check if the rules of the game are respected with the currently on-going move.
+        :param to_slot: the slot to which the piece is intended to be moved
+        :return: true is it is a valid move and False otherwise
+        """
         difference = to_slot.position - self.drag_data.from_slot
 
         q_from = get_quadrant(self.drag_data.from_slot)
@@ -375,6 +438,11 @@ class Game:
         return False
 
     def bail_is_valid(self, slot):
+        """
+        Utility function to check if a bail out of the jail has been done in a legal way.
+        :param slot: the slot intended for the piece
+        :return: True if the move was valid and False otherwise
+        """
         if self.turn == 'White':
             if 12 <= slot.position <= 17:
                 for i in range(12, 18):
@@ -397,6 +465,13 @@ class Game:
             return False
 
     def stack_is_valid(self, to_slot, difference, test=False):
+        """
+        Utility function to check if the stack on which a piece is meant to be positioned would allow for a legal move.
+        :param to_slot: the slot intended for the piece
+        :param difference: the difference between the initial and final positions of the piece, a move, essentially
+        :param test: if the move is to actually committed or just verified
+        :return: True if the move was valid and False otherwise
+        """
         if len(to_slot.pieces) == 0:
             if not test:
                 if difference in self.moves:
@@ -416,6 +491,11 @@ class Game:
         return False
 
     def place(self, piece, slot):
+        """
+        Places the piece on the selected position.
+        :param piece: The piece to be moved.
+        :param slot: The slot to which the piece is intended to be moved.
+        """
         if 24 <= slot.position <= 25:
             self.capture(slot, False)
 
@@ -465,6 +545,11 @@ class Game:
             self.gui.main_canvas.tag_bind(self.black_pieces[position].index, '<B1-Motion>', self.drag)
 
     def capture(self, to_slot, popping=True):
+        """
+        Logic for capturing an enemy piece.
+        :param to_slot: The slot on which the enemy piece resides.
+        :param popping: If the piece taken is to be eliminated from the corresponding slot or it is just a verification.
+        """
         test_1 = 'White'
 
         if not popping:
@@ -515,6 +600,9 @@ class Game:
             to_slot.pieces.pop(-1)
 
     def eliminate_impossible_moves(self):
+        """
+        Eliminates moves that cannot be done due to illegality.
+        """
         if self.turn == 'White':
             for j in range(0, len(self.moves)):
                 is_possible = False
@@ -533,6 +621,13 @@ class Game:
                     self.moves.pop(j)
 
     def check_move(self, piece, distance, test=False):
+        """
+        Verifies if a move would be valid.
+        :param piece: The piece to be moved.
+        :param distance: The distance to be crossed.
+        :param test: If the move is to be committed or just verified.
+        :return: -1 if not valid or the distance to be crossed if yes
+        """
         q_from = get_quadrant(piece.slot)
 
         if self.turn == 'White':
@@ -561,6 +656,9 @@ class Game:
             return -1
 
     def computer_move(self):
+        """
+        Function to simulate the computer's movements, depending on its selected level of difficulty.
+        """
         if self.gui.game_mode == GameMode.EASY:
             while len(self.moves) > 0:
                 move = secrets.choice(self.moves)
@@ -602,6 +700,11 @@ class Game:
 
 
 def get_quadrant(number):
+    """
+    Gets the quadrant of the board in which a slot resides.
+    :param number: the slot's position on the board
+    :return: the quadrant number, 1 for bottom-left, 2 for bottom-right, 3 for upper-right, 4 for upper-left
+    """
     if 0 <= number <= 5:
         return 1
     elif 6 <= number <= 11:
@@ -613,6 +716,11 @@ def get_quadrant(number):
 
 
 def change_turn(current):
+    """
+    Changes the player currently at turn
+    :param current: The player that is now at turn
+    :return: The other player's color
+    """
     if current == 'White':
         return 'Black'
     return 'White'
