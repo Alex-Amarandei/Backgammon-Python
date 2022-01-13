@@ -3,6 +3,7 @@ import tkinter as tk
 from game import *
 from menus import Menu
 from copy import deepcopy
+from player import Player
 from PIL import Image, ImageTk
 from ui_button import UIButton
 from game_modes import GameMode
@@ -33,6 +34,15 @@ class GUI:
         self.player_buttons = [UIButton(), UIButton()]
         self.difficulty_buttons = [UIButton(), UIButton(), UIButton()]
 
+        self.player1 = Player()
+        self.player2 = Player()
+
+        self.player1_input = None
+        self.player2_input = None
+        self.player1_field = None
+        self.player2_field = None
+        self.confirm_button = UIButton()
+
         self.border = None
         self.board = None
         self.separator = None
@@ -55,6 +65,8 @@ class GUI:
             self.update_difficulty_menu(event)
         elif self.current_menu == Menu.GAME_MENU:
             self.update_game_menu(event)
+        elif self.current_menu == Menu.NAME_MENU:
+            self.update_name_menu(event)
 
     def clean(self):
         """
@@ -87,9 +99,71 @@ class GUI:
         self.update_board(event.widget.winfo_width(), event.widget.winfo_height())
         self.game.update_game(event)
 
-    def update_title(self, width, height):
+    def update_name_menu(self, event):
+        """
+        Updates the newly added name menu for users to type their names.
+        :param event: widget used for getting the width and height of the current window
+        """
+        self.update_title(event.widget.winfo_width(), event.widget.winfo_height(),
+                          'Let\'s get to know each other!')
+        self.update_player_fields(event.widget.winfo_width(), event.widget.winfo_height())
+        self.update_confirm_button(event.widget.winfo_width(), event.widget.winfo_height())
+
+    def update_player_fields(self, width, height):
+        """
+            Updates the newly added fields for users to type their names in order to have them displayed whilst playing.
+            :param width: the width of the current window
+            :param height: the height of the current window
+        """
+        scale = int(0.04 * width)
+        self.player1_input = tk.Entry(self.root, font=('Helvetica', scale),
+                                      width=int(width/scale),
+                                      fg='#336d92', bd=0)
+        self.player1_input.insert(2, 'Player 1 Name')
+
+        self.player2_input = tk.Entry(self.root, font=('Helvetica', scale),
+                                      width=int(width/scale),
+                                      fg='#336d92', bd=0)
+        self.player2_input.insert(2, 'Player 2 Name')
+
+        self.player1_field = self.main_canvas.create_window(width / 2,
+                                                            2 * height / 5,
+                                                            anchor='center',
+                                                            window=self.player1_input)
+        self.player2_field = self.main_canvas.create_window(width / 2,
+                                                            3 * height / 5,
+                                                            anchor='center',
+                                                            window=self.player2_input)
+
+    def update_confirm_button(self, width, height):
+        """
+        Resizes the aspect of the confirm button that adds the names of the players to stored data.
+        :param width:  the width of the current window
+        :param height: the height of the current window
+        """
+        self.confirm_button.image = ImageTk.PhotoImage(
+            Image.open(self.theme.confirm_button_path).resize((int(width / 2), int(height / 7)), Image.ANTIALIAS))
+
+        self.confirm_button.index = self.main_canvas.create_image(width / 2,
+                                                                  6 * height / 7,
+                                                                  image=self.confirm_button.image)
+
+        self.main_canvas.tag_bind(self.confirm_button.index, '<Button-1>', self.confirm)
+
+    def confirm(self, event):
+        """
+        Adds the collected data from the input fields into storage for later use.
+        :param event: widget used for getting the width and height of the current window
+        """
+        self.player1 = Player(self.player1_input.get(), 'White')
+        self.player2 = Player(self.player2_input.get(), 'Black')
+        self.current_menu = Menu.GAME_MENU
+        self.update(event)
+
+    def update_title(self, width, height, text='Backgammon'):
         """
         Updates the title to fit the new sizes.
+        :param text: the text to be shown on the upper part of the screen
         :param width: the width of the window
         :param height: the height of the window
         """
@@ -98,7 +172,7 @@ class GUI:
                                                        height / 6,
                                                        fill=self.theme.font_color,
                                                        font=font,
-                                                       text='Backgammon')
+                                                       text=text)
 
     def update_player_buttons(self, width, height):
         """
@@ -222,7 +296,7 @@ class GUI:
         For choosing to play with another player locally.
         :param event: widget used for getting the current width and height of the screen
         """
-        self.current_menu = Menu.GAME_MENU
+        self.current_menu = Menu.NAME_MENU
         self.game_mode = GameMode.VS
         self.update(event)
 

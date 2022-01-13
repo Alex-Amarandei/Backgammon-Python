@@ -74,14 +74,14 @@ class Game:
 
     def update_player(self):
         """
-        Updates the player text on the right of the screen according to which of the two's turn it is.
+        Updates the player text on the right of the screen according to which of the two's turn it is. Now it also supports Nicknames that have to be added at a previous step.
         """
-        if self.turn == 'none_1':
-            turn = 'White'
-        elif self.turn == 'none_2':
-            turn = 'Black'
-        else:
-            turn = self.turn
+        player_name = ''
+        if self.turn == 'none_1' or self.turn == 'White':
+            player_name = self.gui.player1.name
+        elif self.turn == 'none_2' or self.turn == 'Black':
+            player_name = self.gui.player2.name
+
         self.gui.main_canvas.delete(self.turn_index)
 
         font = 'Century ' + str(int(min(self.width / 32, self.height / 12))) + ' bold'
@@ -89,7 +89,7 @@ class Game:
                                                            self.height / 2 - 0.05 * self.height,
                                                            fill=self.gui.theme.font_color,
                                                            font=font,
-                                                           text=turn)
+                                                           text=player_name)
 
     def update_status(self):
         """
@@ -137,7 +137,7 @@ class Game:
             self.height / 2 - 0.15 * self.height,
             image=self.dice_2.image)
 
-        if self.status == Status.MOVE and self.turn == 'Black':
+        if self.status == Status.MOVE and self.turn == 'Black' and self.gui.game_mode != GameMode.VS:
             self.computer_move()
 
     def choose_dice_image(self, number):
