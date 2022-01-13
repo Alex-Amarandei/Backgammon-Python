@@ -6,6 +6,7 @@ from status import Status
 from drag_data import DragData
 from PIL import Image, ImageTk
 from ui_button import UIButton
+from game_modes import GameMode
 
 
 class Game:
@@ -111,6 +112,9 @@ class Game:
             self.height / 2 - 0.15 * self.height,
             image=self.dice_2.image)
 
+        if self.status == Status.MOVE and self.turn == 'Black':
+            self.computer_move()
+
     def choose_dice_image(self, number):
         if number == 1:
             return self.gui.theme.dice_1_path
@@ -157,10 +161,10 @@ class Game:
             self.white_pieces[i].position = i
             self.place(self.white_pieces[i], self.slots[23])
 
-    def update_pieces(self):
-        for slot in self.slots:
-            for piece in slot.pieces:
-                self.place(piece, slot)
+    # def update_pieces(self):
+    #     for slot in self.slots:
+    #         for piece in slot.pieces:
+    #             self.place(piece, slot)
 
     def drag_start(self, event, item):
         if self.slots[item.slot].pieces[-1].position == item.position \
@@ -270,6 +274,7 @@ class Game:
                     self.moves = 4 * [first]
                 else:
                     self.moves = [first, second]
+                self.eliminate_impossible_moves()
 
                 self.status = Status.MOVE
                 self.update_status()
@@ -394,16 +399,19 @@ class Game:
     def stack_is_valid(self, to_slot, difference, test=False):
         if len(to_slot.pieces) == 0:
             if not test:
-                self.moves.remove(difference)
+                if difference in self.moves:
+                    self.moves.remove(difference)
             return True
         elif to_slot.pieces[-1].color == self.turn:
             if not test:
-                self.moves.remove(difference)
+                if difference in self.moves:
+                    self.moves.remove(difference)
             return True
         elif len(to_slot.pieces) == 1:
             if not test:
-                self.moves.remove(difference)
-                self.capture(to_slot)
+                if difference in self.moves:
+                    self.moves.remove(difference)
+                    self.capture(to_slot)
             return True
         return False
 
@@ -511,38 +519,75 @@ class Game:
             for j in range(0, len(self.moves)):
                 is_possible = False
                 for i in range(0, len(self.white_pieces)):
-                    if self.check_move(self.white_pieces[i], self.moves[j]):
+                    if self.check_move(self.white_pieces[i], self.moves[j]) != -1:
+                        is_possible = True
+                if not is_possible:
+                    self.moves.pop(j)
+        else:
+            for j in range(0, len(self.moves)):
+                is_possible = False
+                for i in range(0, len(self.black_pieces)):
+                    if self.check_move(self.black_pieces[i], self.moves[j]) != -1:
                         is_possible = True
                 if not is_possible:
                     self.moves.pop(j)
 
-    def check_move(self, piece, distance):
+    def check_move(self, piece, distance, test=False):
         q_from = get_quadrant(piece.slot)
 
         if self.turn == 'White':
             if q_from == 1 or q_from == 3:
-                if self.stack_is_valid(self.slots[piece.slot + distance], distance):
-                    return True
+                if self.stack_is_valid(self.slots[piece.slot + distance], distance, test):
+                    return piece.slot + distance
             elif q_from == 2:
                 if piece.slot + distance < 12 and \
-                        self.stack_is_valid(self.slots[piece.slot + distance], distance):
-                    return True
+                        self.stack_is_valid(self.slots[piece.slot + distance], distance, test):
+                    return piece.slot + distance
             elif q_from == 4:
-                if self.stack_is_valid(self.slots[(piece.slot + distance) % 24], distance):
-                    return True
-            return False
+                if self.stack_is_valid(self.slots[(piece.slot + distance) % 24], distance, test):
+                    return (piece.slot + distance) % 24
+            return -1
         else:
             if q_from == 1:
-                if self.stack_is_valid(self.slots[piece.slot - distance + 24], distance):
-                    return True
+                if self.stack_is_valid(self.slots[piece.slot - distance + 24], distance, test):
+                    return piece.slot - distance + 24
             elif q_from == 2 or q_from == 4:
-                if self.stack_is_valid(self.slots[piece.slot - distance], distance):
-                    return True
+                if self.stack_is_valid(self.slots[piece.slot - distance], distance, test):
+                    return piece.slot - distance
             elif q_from == 3:
                 if piece.slot - distance > 11 and \
-                        self.stack_is_valid(self.slots[piece.slot - distance], distance):
-                    return True
-            return False
+                        self.stack_is_valid(self.slots[piece.slot - distance], distance, test):
+                    return piece.slot - distance
+            return -1
+
+    def computer_move(self):
+        if self.gui.game_mode == GameMode.EASY:
+            while len(self.moves) > 0:
+                move = secrets.choice(self.moves)
+                ascending = secrets.choice(range(0, 2))
+
+                if ascending == 1:
+                    for i in range(0, len(self.black_pieces)):
+                        answer = self.check_move(self.black_pieces[i], move)
+                        if answer != -1 and self.slots[self.black_pieces[i].slot].pieces[-1] == self.black_pieces[i]:
+                            self.place(self.black_pieces[i], self.slots[answer])
+                            break
+                else:
+                    for i in range(len(self.black_pieces) - 1, -1, -1):
+                        answer = self.check_move(self.black_pieces[i], move)
+                        if answer != -1 and self.slots[self.black_pieces[i].slot].pieces[-1] == self.black_pieces[i]:
+                            self.place(self.black_pieces[i], self.slots[answer])
+                            break
+        elif self.gui.game_mode == GameMode.MEDIUM:
+            pass
+        elif self.gui.game_mode == GameMode.HARD:
+            pass
+
+        self.turn = change_turn(self.turn)
+        self.update_player()
+
+        self.status = Status.ROLL
+        self.update_status()
 
 
 def get_quadrant(number):
