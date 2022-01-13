@@ -579,7 +579,18 @@ class Game:
                             self.place(self.black_pieces[i], self.slots[answer])
                             break
         elif self.gui.game_mode == GameMode.MEDIUM:
-            pass
+            answers = []
+            for j in range(0, len(self.moves)):
+                for i in range(0, len(self.black_pieces)):
+                    answer = self.check_move(self.black_pieces[i], self.moves[j], True)
+                    if answer != -1 and self.slots[self.black_pieces[i].slot].pieces[-1] == self.black_pieces[i]:
+                        answers.append([i, j])
+
+            answers.sort(reverse=True)
+
+            for i in range(0, len(self.moves)):
+                answer = self.check_move(self.black_pieces[answers[i][0]], self.moves[answers[i][1]])
+                self.place(self.black_pieces[answers[i][0]], self.slots[answer])
         elif self.gui.game_mode == GameMode.HARD:
             pass
 
