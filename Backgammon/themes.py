@@ -14,6 +14,13 @@ class DarkTheme:
     triangle_fill = '#505050'
     white_fill = '#FFFFFF'
     black_fill = '#900000'
+    roll_path = 'images/Roll.png'
+    dice_1_path = 'images/Dark Dice 1.png'
+    dice_2_path = 'images/Dark Dice 2.png'
+    dice_3_path = 'images/Dark Dice 3.png'
+    dice_4_path = 'images/Dark Dice 4.png'
+    dice_5_path = 'images/Dark Dice 5.png'
+    dice_6_path = 'images/Dark Dice 6.png'
 
 
 class LightTheme:
@@ -29,6 +36,13 @@ class LightTheme:
     triangle_fill = '#D8D8D8'
     white_fill = '#FFFFFF'
     black_fill = '#900000'
+    roll_path = 'images/Roll.png'
+    dice_1_path = 'images/Light Dice 1.png'
+    dice_2_path = 'images/Light Dice 2.png'
+    dice_3_path = 'images/Light Dice 3.png'
+    dice_4_path = 'images/Light Dice 4.png'
+    dice_5_path = 'images/Light Dice 5.png'
+    dice_6_path = 'images/Light Dice 6.png'
 
 
 def dark_theme_selected():

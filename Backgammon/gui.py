@@ -2,6 +2,7 @@ import tkinter as tk
 
 from game import *
 from menus import Menu
+from copy import deepcopy
 from PIL import Image, ImageTk
 from ui_button import UIButton
 from game_modes import GameMode
@@ -14,7 +15,7 @@ class GUI:
         self.scale = 0.8
         self.size = None
 
-        self.game = None
+        self.game = Game(self)
         self.game_mode = GameMode.VS
         self.current_menu = Menu.MAIN_MENU
 
@@ -59,7 +60,6 @@ class GUI:
         self.update_difficulty_buttons(event.widget.winfo_width(), event.widget.winfo_height())
 
     def update_game_menu(self, event):
-        self.game = Game(self)
         self.update_board(event.widget.winfo_width(), event.widget.winfo_height())
         self.game.update_game(event)
 
@@ -138,6 +138,8 @@ class GUI:
         self.update_triangles(width, height)
 
     def update_triangles(self, width, height):
+        backup = deepcopy(self.game.slots)
+
         self.size = self.scale * min(width, height)
         offsets = [self.game.x_left, width / 2 + 0.025 * self.size]
         bases = [self.game.y_down, self.game.y_up]
@@ -154,6 +156,9 @@ class GUI:
                                                                             bases[int(bool(i > 1))],
                                                                             fill=self.theme.triangle_fill)
                 self.game.slots[i * 6 + j] = Slot(index=self.triangles[i * 6 + j], position=i * 6 + j)
+
+        for i in range(0, len(backup)):
+            self.game.slots[i].pieces = deepcopy(backup[i].pieces)
 
     def play_single(self, event):
         self.current_menu = Menu.DIFFICULTY_MENU
