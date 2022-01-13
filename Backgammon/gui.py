@@ -1,5 +1,6 @@
 import tkinter as tk
 
+from game import *
 from menus import Menu
 from PIL import Image, ImageTk
 from ui_button import UIButton
@@ -30,6 +31,7 @@ class GUI:
         self.board = None
         self.separator = None
         self.triangles = 24 * [None]
+        self.triangle_width = None
 
         self.main_canvas.pack(fill='both', expand=True)
         self.main_canvas.bind('<Configure>', self.update)
@@ -140,18 +142,18 @@ class GUI:
         offsets = [self.game.x_left, width / 2 + 0.025 * self.size]
         bases = [self.game.y_down, self.game.y_up]
         tops = [bases[0] - 0.95 * self.size / 3, bases[1] + 0.95 * self.size / 3]
-        triangle_width = 0.9 * self.size / 12
+        self.triangle_width = 0.9 * self.size / 12
 
         for i in range(0, 4):
             for j in range(0, 6):
-                self.triangles[i * 6 + j] = self.main_canvas.create_polygon(offsets[i % 2] + j * triangle_width,
+                self.triangles[i * 6 + j] = self.main_canvas.create_polygon(offsets[i % 2] + j * self.triangle_width,
                                                                             bases[int(bool(i > 1))],
-                                                                            offsets[i % 2] + (2 * j + 1) * triangle_width / 2,
+                                                                            offsets[i % 2] + (2 * j + 1) * self.triangle_width / 2,
                                                                             tops[int(bool(i > 1))],
-                                                                            offsets[i % 2] + (j + 1) * triangle_width,
+                                                                            offsets[i % 2] + (j + 1) * self.triangle_width,
                                                                             bases[int(bool(i > 1))],
                                                                             fill=self.theme.triangle_fill)
-                self.game.slots[i * 6 + j].index = self.triangles[i * 6 + j]
+                self.game.slots[i * 6 + j] = Slot(index=self.triangles[i * 6 + j], position=i * 6 + j)
 
     def play_single(self, event):
         self.current_menu = Menu.DIFFICULTY_MENU
@@ -176,112 +178,3 @@ class GUI:
         self.current_menu = Menu.GAME_MENU
         self.game_mode = GameMode.HARD
         self.update(event)
-
-
-class Game:
-    def __init__(self, gui):
-        self.gui = gui
-        self.turn = 'none'
-
-        self.x_left = None
-        self.y_up = None
-        self.x_right = None
-        self.y_down = None
-
-        self.slots = 24 * [Slot()]
-        self.white_pieces = 15 * [Piece(color='white')]
-        self.black_pieces = 15 * [Piece(color='black')]
-
-    def update_game(self, event):
-        if self.turn == 'none':
-            self.new_game(event.widget.winfo_width(), event.widget.winfo_height())
-        else:
-            self.move(event.widget.winfo_width(), event.widget.winfo_height())
-
-    def new_game(self, width, height):
-        size = self.gui.scale * min(width, height)
-        diameter = 0.81 * size / 12
-        margin = 0.09 * size / 24
-
-        self.set_new_white_pieces(width, height, size, diameter, margin)
-        self.set_new_black_pieces(width, height, size, diameter, margin)
-
-    def set_new_white_pieces(self, width, height, size, diameter, margin):
-        for i in range(0, 2):
-            self.white_pieces[i].index = self.gui.main_canvas.create_oval(self.x_right - diameter - margin,
-                                                                          self.y_up + i * diameter,
-                                                                          self.x_right - margin,
-                                                                          self.y_up + (i + 1) * diameter,
-                                                                          fill=self.gui.theme.white_fill)
-            self.white_pieces[i].slot = 12
-
-        for i in range(0, 5):
-            self.white_pieces[2 + i].index = self.gui.main_canvas.create_oval(self.x_left + margin,
-                                                                              self.y_up + i * diameter,
-                                                                              self.x_left + margin + diameter,
-                                                                              self.y_up + (i + 1) * diameter,
-                                                                              fill=self.gui.theme.white_fill)
-            self.white_pieces[i].slot = 23
-
-        offset = 4 * (2 * margin + diameter)
-        for i in range(0, 3):
-            self.white_pieces[7 + i].index = self.gui.main_canvas.create_oval(self.x_left + margin + offset,
-                                                                              self.y_down - (i + 1) * diameter,
-                                                                              self.x_left + margin + diameter + offset,
-                                                                              self.y_down - i * diameter,
-                                                                              fill=self.gui.theme.white_fill)
-            self.white_pieces[i].slot = 4
-
-        for i in range(0, 5):
-            self.white_pieces[10 + i].index = self.gui.main_canvas.create_oval(width / 2 + 0.025 * size + margin,
-                                                                               self.y_down - (i + 1) * diameter,
-                                                                               width / 2 + 0.025 * size + margin + diameter,
-                                                                               self.y_down - i * diameter,
-                                                                               fill=self.gui.theme.white_fill)
-            self.white_pieces[i].slot = 6
-
-    def set_new_black_pieces(self, width, height, size, diameter, margin):
-        for i in range(0, 2):
-            self.black_pieces[i].index = self.gui.main_canvas.create_oval(self.x_right - diameter - margin,
-                                                                          self.y_down - (i + 1) * diameter,
-                                                                          self.x_right - margin,
-                                                                          self.y_down - i * diameter,
-                                                                          fill=self.gui.theme.black_fill)
-
-        for i in range(0, 5):
-            self.black_pieces[2 + i].index = self.gui.main_canvas.create_oval(self.x_left + margin,
-                                                                              self.y_down - (i + 1) * diameter,
-                                                                              self.x_left + margin + diameter,
-                                                                              self.y_down - i * diameter,
-                                                                              fill=self.gui.theme.black_fill)
-
-        offset = 4 * (2 * margin + diameter)
-        for i in range(0, 3):
-            self.black_pieces[7 + i].index = self.gui.main_canvas.create_oval(self.x_left + margin + offset,
-                                                                              self.y_up + i * diameter,
-                                                                              self.x_left + margin + diameter + offset,
-                                                                              self.y_up + (i + 1) * diameter,
-                                                                              fill=self.gui.theme.black_fill)
-
-        for i in range(0, 5):
-            self.black_pieces[10 + i].index = self.gui.main_canvas.create_oval(width / 2 + 0.025 * size + margin,
-                                                                               self.y_up + i * diameter,
-                                                                               width / 2 + 0.025 * size + margin + diameter,
-                                                                               self.y_up + (i + 1) * diameter,
-                                                                               fill=self.gui.theme.black_fill)
-
-    def move(self, width, height):
-        pass
-
-
-class Piece:
-    def __init__(self, index=None, slot=None, color=None):
-        self.index = index
-        self.slot = slot
-        self.color = color
-
-
-class Slot:
-    def __init__(self, index=None, pieces=None):
-        self.index = index
-        self.pieces = pieces
